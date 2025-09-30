@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image.prod.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image-aframe.prod.js"></script>
+  </head>
+
+  <body>
+    <a-scene
+      mindar-image="imageTargetSrc: https://tours.interralab.co/simon/archivos/targets.mind; filterMinCF:0.001; filterBeta:0.01;"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+    >
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity mindar-image-target="targetIndex: 0" id="target">
+        <a-video
+          id="video-plane"
+          position="0 0 0.1"
+          width="1"
+          height="1.75"
+          material="shader: flat;"
+          src="#video"
+          autoplay="false"
+          webkit-playsinline
+          playsinline
+        ></a-video>
+      </a-entity>
+    </a-scene>
+
+    <!-- Video oculto -->
+    <video
+      id="video"
+      width="1"
+      height="1.75"
+      playsinline
+      webkit-playsinline
+      crossorigin="anonymous"
+      style="display: none"
+    >
+      <source
+        src="https://tours.interralab.co/simon/archivos/reducido.mp4"
+        type="video/mp4"
+      />
+    </video>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const video = document.querySelector("#video");
+        const target = document.querySelector("#target");
+        let videoUnlocked = false;
+
+        // Desbloquear video en iOS con eventos touch
+        const unlockVideo = () => {
+          if (!videoUnlocked) {
+            video.muted = false; // 🔊 Habilitamos el audio
+            video
+              .play()
+              .then(() => {
+                video.pause();
+                videoUnlocked = true;
+                console.log("✅ Video desbloqueado y con sonido en iOS");
+              })
+              .catch((e) =>
+                console.warn("⚠️ No se pudo desbloquear el video:", e)
+              );
+          }
+        };
+
+        // Primer toque en la pantalla para desbloquear video y sonido en iOS
+        document.addEventListener("touchstart", unlockVideo, { once: true });
+
+        // Evento cuando se detecta el marcador
+        target.addEventListener("targetFound", () => {
+          if (videoUnlocked) {
+            console.log("▶️ Reproduciendo video con sonido...");
+            video
+              .play()
+              .catch((e) => console.warn("⚠️ No se pudo reproducir:", e));
+          }
+        });
+
+        // Pausar cuando se pierde el marcador
+        target.addEventListener("targetLost", () => {
+          console.log("⏸️ Pausando video...");
+          video.pause();
+        });
+
+        // Reproducir video con sonido al tocar la pantalla en iOS
+        document.addEventListener("click", () => {
+          if (videoUnlocked && video.paused) {
+            video.muted = false; // 🔊 Asegurar que el sonido esté activado
+            console.log("▶️ Intentando reproducir con sonido...");
+            video
+              .play()
+              .catch((e) => console.warn("⚠️ No se pudo reproducir:", e));
+          }
+        });
+
+        document.addEventListener("touchend", () => {
+          if (videoUnlocked && video.paused) {
+            video.muted = false; // 🔊 Asegurar que el sonido esté activado
+            console.log("▶️ Intentando reproducir con sonido...");
+            video
+              .play()
+              .catch((e) => console.warn("⚠️ No se pudo reproducir:", e));
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
